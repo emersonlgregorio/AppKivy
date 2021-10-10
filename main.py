@@ -5,6 +5,7 @@ from botoes import *
 import requests
 from bannervenda import BannerVenda
 import os
+from functools import partial
 
 GUI = Builder.load_file("main.kv")
 
@@ -21,7 +22,8 @@ class MainApp(App):
         pagina_fotoperfil = self.root.ids['fotoperfilpage']
         lista_fotos = pagina_fotoperfil.ids['lista_fotos_perfil']
         for foto in arquivos:
-            imagem = ImageButton(source=f'icones/fotos_perfil/{foto}', on_release=self.mudar_foto_perfil)
+            imagem = ImageButton(source=f'icones/fotos_perfil/{foto}',
+                                 on_release=partial(self.mudar_foto_perfil, foto))
             lista_fotos.add_widget(imagem)
         #carrega informações do usuario
         self.carregar_infos_usuario()
@@ -55,8 +57,21 @@ class MainApp(App):
         gerenciador_telas = self.root.ids["screen_manager"]
         gerenciador_telas.current = id_tela
 
-    def mudar_foto_perfil(self, *args):
-        print('Mudar Foto Ferfil')
+    def mudar_foto_perfil(self, foto, *args):
+        foto_perfil = self.root.ids["foto_perfil"]
+        foto_perfil.source = f"icones/fotos_perfil/{foto}"
 
+        """
+            Para atualizar informações no Firebase precisamos passar como texto conforme
+            o exemplo abaixo. Utilizando {{}}, colchetes duplos dom o f string.
+            Colocar todas os valores entre apas duplas. Garantindo que o valor das váriaves
+            fiquem corretas.
+        """
+
+        info = f'{{"avatar": "{foto}"}}'
+        requisicao = requests.patch(f'https://appkivy-a225c-default-rtdb.firebaseio.com/{self.id_usuario}.json',
+                                    data=info)
+
+        self.mudar_tela("ajustespage")
 
 MainApp().run()
